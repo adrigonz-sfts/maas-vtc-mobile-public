@@ -42,6 +42,22 @@
         "Tests acotados de rutas, guard y vistas wrapper"
       ],
       "status": "done"
+    },
+    {
+      "id": 3,
+      "name": "vtc_home_placeholder",
+      "batch": "vtc_home_placeholder",
+      "title": "Home con VtcPlaceholder del paquete VTC",
+      "description": "Sustituir el placeholder mobile genérico de Home por la vista VtcPlaceholder de @softour/maas-vtc-micro-front-private, con estilos del paquete y claves i18n vtcPlaceholder.* en en/es.",
+      "acceptance": [
+        "src/views/Home/Home.vue renderiza VtcPlaceholder del paquete @softour/maas-vtc-micro-front-private (wrapper mínimo como Login.vue)",
+        "main.ts importa @softour/maas-vtc-micro-front-private/style.css",
+        "Claves vtcPlaceholder.* en src/locale/en.json y src/locale/es.json (copiar textos del paquete VTC)",
+        "Eliminar Home.scss si ya no aplica tras el wrapper",
+        "Tests acotados en src/views/Home/__tests__/Home.spec.ts que verifiquen render de VtcPlaceholder",
+        "Test acotado que verifique import de estilos VTC en main (src/__tests__/main-vtc-styles.spec.ts)"
+      ],
+      "status": "done"
     }
   ]
 }

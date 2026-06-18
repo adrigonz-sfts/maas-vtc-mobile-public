@@ -9,5 +9,49 @@
             "welcomeBack": "Welcome back",
             "welcomeBackLead": "Sign in to continue to your mobile workspace."
         }
+    },
+    "vtcPlaceholder": {
+        "brand": "MAAS VTC",
+        "nav": {
+            "fleet": "Fleet",
+            "services": "Services",
+            "corporate": "Corporate",
+            "safety": "Safety",
+            "bookNow": "Book now"
+        },
+        "heroImageAlt": "Luxury chauffeur vehicle on a city street",
+        "eyebrow": "Coming soon",
+        "title": "Premium rides, elevated",
+        "message": "We are preparing a refined VTC experience with professional chauffeurs, real-time booking, and corporate-grade safety. Be the first to know when we launch.",
+        "countdown": {
+            "days": "Days",
+            "hours": "Hours",
+            "minutes": "Minutes",
+            "seconds": "Seconds"
+        },
+        "emailPlaceholder": "Enter your email",
+        "notifyCta": "Notify me",
+        "subscribed": "You're on the list",
+        "features": {
+            "fleet": {
+                "title": "Premium fleet",
+                "text": "Executive sedans and SUVs maintained to the highest standards for every journey."
+            },
+            "chauffeurs": {
+                "title": "Professional chauffeurs",
+                "text": "Vetted, trained drivers focused on discretion, punctuality, and exceptional service."
+            },
+            "security": {
+                "title": "Safety first",
+                "text": "Live trip tracking, verified identities, and corporate compliance built in."
+            }
+        },
+        "copyright": "© 2026 MAAS VTC. All rights reserved.",
+        "footer": {
+            "privacy": "Privacy",
+            "terms": "Terms",
+            "cookies": "Cookies",
+            "contact": "Contact"
+        }
     }
 }

@@ -100,6 +100,7 @@
         "@softour/global-front-components": "^1.9.0",
         "@softour/global-front-tokens-private": "^1.1.0",
         "@softour/maas-users-micro-front-private": "^1.2.1",
+        "@softour/maas-vtc-micro-front-private": "^0.0.1",
         "axios": "^1.16.0"
     }
 }
