@@ -1,0 +1,13 @@
+{
+    "app": {
+        "title": "maas-school-front-public"
+    },
+    "home": {
+        "dashboard": {
+            "loading": "Cargando…",
+            "logIn": "Iniciar sesión",
+            "welcomeBack": "Bienvenido de nuevo",
+            "welcomeBackLead": "Inicia sesión para continuar en tu espacio móvil."
+        }
+    }
+}

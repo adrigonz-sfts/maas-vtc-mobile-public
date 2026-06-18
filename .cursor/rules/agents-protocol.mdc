@@ -1,0 +1,25 @@
+---
+description: >-
+  Obliga el arranque de AGENTS.md (current.md + feature_list + plan) antes de
+  tocar código de producto en src/, tests/ o e2e/.
+alwaysApply: true
+---
+
+# Protocolo AGENTS (siempre)
+
+Antes de **cualquier** cambio en `src/`, `tests/`, `e2e/` o equivalentes:
+
+1. Leer `docs/progress/current.md`.
+2. Abrir `docs/progress/feature_list.json` (crear desde `feature_list_example.json` si no existe).
+3. Poner **una** feature en `in_progress` (menor `id` entre `pending`, o continuar la ya activa según `current.md`).
+4. Actualizar `docs/progress/current.md` con feature, inicio y plan breve.
+
+No uses “el usuario pidió solo un retoque” para saltarte esto: igual registrá la tarea en `feature_list.json`.
+
+Excepción: cambios **solo** en `docs/`, `.cursor/`, progreso (`feature_list.json`, `current.md`) o **infra SecDevOps** (`.drone.yml`, `deploy/`, `Dockerfile`, `scripts/` de plataforma) sin lógica en `src/`.
+
+**Pipeline multi-agente (producto):** después de lo anterior, cualquier cambio en `src/`, `tests/` o `e2e/` debe seguir **líder → implementador → revisor** (definiciones en `.cursor/agents/`). El agente principal no implementa producto solo ni cierra sin revisor. Si no hay subagentes disponibles, no toques código de aplicación y deja el bloqueo en `current.md`. Excepción: solo `docs/`, `.cursor/` (reglas/docs), progreso o infra, sin código de producto.
+
+**Cierre (§6):** el bloque `npm run test` + `lint:fix` + `type-check` es obligatorio solo si la sesión modificó archivos bajo `src/`; si solo hubo cambios en `docs/`, `.cursor/`, progreso o infra, no lances ese bloque por norma.
+
+Detalle normativo: `AGENTS.md` §2.2, §6 y raíz del repo.

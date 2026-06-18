@@ -1,0 +1,29 @@
+{
+  "project": "notes-cli",
+  "description": "Plantilla didáctica. En este repo la lista de trabajo real es docs/progress/feature_list.json.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_tests_to_close": true,
+    "valid_status": [
+      "pending",
+      "in_progress",
+      "done",
+      "blocked"
+    ]
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "storage_layer",
+      "title": "Capa de almacenamiento JSON",
+      "description": "Lectura/escritura atómica de notas en un archivo JSON. Crea el archivo si no existe.",
+      "acceptance": [
+        "Existe src/storage.py con funciones load() y save(notes)",
+        "save() es atómico (escritura a archivo temporal + rename)",
+        "load() devuelve [] si el archivo no existe",
+        "tests/test_storage.py cubre los 3 casos anteriores"
+      ],
+      "status": "done"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "project": "maas-fe-mobile-template-public",
+  "description": "Template Vue 3 + Vite + Capacitor para apps móviles MaaS.",
+  "rules": {
+    "one_feature_at_a_time": true,
+    "require_tests_to_close": true,
+    "valid_status": ["pending", "in_progress", "reviewed", "done", "blocked"]
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "capacitor_integration",
+      "batch": "capacitor_integration",
+      "title": "Integración Capacitor 7 (capa nativa mínima)",
+      "description": "Añadir Capacitor 7, build:app, composables nativo/web, deep links OAuth, mocks Vitest y docs. Sin cambiar arquitectura ni lógica de negocio.",
+      "acceptance": [
+        "Dependencias @capacitor/* en package.json; scripts build:app, cap:sync, build:android, build:ios",
+        "vite.app.config.ts con base './', outDir www, alias @",
+        "capacitor.config.ts con appId, appName, webDir www, adjustMarginsForEdgeToEdge auto",
+        ".gitignore incluye www/, android/, ios/",
+        "Composables en src/shared/composables/useNetworkStatus/, useGeolocationPermission/, useAppLifecycle/ con cleanup",
+        "main.ts: App.getLaunchUrl + appUrlOpen para OAuth nativo con VITE_FRONTEND_REDIRECT_ORIGIN",
+        "test-setup.ts mockea @capacitor/network y plugins usados",
+        "docs/CAPACITOR.md con build:app vs build, cap:sync, OIDC WebView",
+        ".env.example documenta VITE_FRONTEND_REDIRECT_ORIGIN y nota emulador Android 10.0.2.2"
+      ],
+      "status": "done"
+    },
+    {
+      "id": 2,
+      "name": "users_auth_flow",
+      "batch": "users_auth_flow",
+      "title": "Flujo login users + guard + home placeholder mobile",
+      "description": "Integrar @softour/maas-users-micro-front-private: vistas wrapper (Login, AuthComplete), registerAuthGuard, rutas públicas/protegidas y home placeholder mobile tras auth complete.",
+      "acceptance": [
+        "Vistas wrapper en src/views/Login/Login.vue y src/views/AuthComplete/AuthComplete.vue que rendericen LoginView y AuthCompleteView del paquete users",
+        "Rutas / (login), /auth/complete (públicas), /home (meta.requiresAuth: true) en src/routes.ts",
+        "registerAuthGuard(router) aplicado desde @softour/maas-users-micro-front-private",
+        "main.ts importa estilos users + global-front-components y registra plugin Softour",
+        "Claves i18n home.dashboard.* en locale en/es para la LoginView del paquete",
+        "Vista src/views/Home/Home.vue con placeholder mobile (Mobile Project Placeholder) tras autenticación",
+        "Tests acotados de rutas, guard y vistas wrapper"
+      ],
+      "status": "done"
+    }
+  ]
+}

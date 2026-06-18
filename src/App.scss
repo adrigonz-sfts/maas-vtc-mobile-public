@@ -1,0 +1,46 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-base);
+    line-height: var(--line-height-base);
+}
+
+#app {
+    background-color: var(--color-surface-base);
+}
+
+body {
+    overflow: hidden;
+}
+
+.theme {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 9999;
+    border: none;
+    background: var(--theme-toggle-bg, #fff);
+    color: var(--theme-toggle-color, #222);
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+}
+
+:root {
+    --spacing-xxs: var(--space-xxs);
+    --spacing-xs: var(--space-xs);
+    --spacing-sm: var(--space-sm);
+    --spacing-md: var(--space-md);
+    --spacing-lg: var(--space-lg);
+    --spacing-xl: var(--space-xl);
+    --spacing-2xl: var(--space-2xl);
+    --spacing-3xl: var(--space-3xl);
+    --spacing-4xl: var(--space-4xl);
+    --color-danger: var(--color-action-error);
+    --color-link: var(--color-action-info);
+    --color-surface-subtle: var(--color-100);
+    --z-modal: var(--elevation-toast-z);
+}

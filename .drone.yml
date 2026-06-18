@@ -1,0 +1,335 @@
+---
+kind: pipeline
+type: docker
+name: pr_ci_frontend
+
+trigger:
+  event:
+    - pull_request
+
+steps:
+  - name: lint_frontend
+    image: node:20-bookworm-slim
+    commands:
+      - npm install -g npm@11.16.0
+      - cp .npmrc.example .npmrc
+      - npm ci --include=dev --no-audit --no-fund
+      - rm -f .npmrc
+      - test -x node_modules/.bin/eslint
+      - test -x node_modules/.bin/vue-tsc
+      - npm run lint
+      - npm run type-check
+
+  - name: test_frontend
+    image: node:20-bookworm-slim
+    commands:
+      - npm install -g npm@11.16.0
+      - cp .npmrc.example .npmrc
+      - npm ci --include=dev --no-audit --no-fund
+      - rm -f .npmrc
+      - test -x node_modules/.bin/vitest
+      - npm run test:ci
+
+  - name: sast_sonar
+    image: sonarsource/sonar-scanner-cli:latest
+    environment:
+      # NOTE: For pull_request builds, enable "Allow Pull Requests"
+      # on Sonar secrets in Drone UI.
+      SONAR_HOST_URL_CI:
+        from_secret: sonar_host_url_ci
+      SONAR_TOKEN_CI:
+        from_secret: sonar_token_ci
+      # Legacy fallback during migration.
+      SONAR_HOST_URL:
+        from_secret: sonar_host_url
+      SONAR_TOKEN:
+        from_secret: sonar_token
+    commands:
+      - |
+        set -eu
+        env_or_empty() {
+          printenv "$1" 2>/dev/null || true
+        }
+        first_non_empty() {
+          for v in "$@"; do
+            if [ -n "$v" ]; then
+              printf '%s' "$v"
+              return 0
+            fi
+          done
+          return 1
+        }
+        BUILD_EVENT="$(env_or_empty DRONE_BUILD_EVENT)"
+        [ -n "$BUILD_EVENT" ] || BUILD_EVENT="unknown"
+        REPO_NAME="$(env_or_empty DRONE_REPO_NAME)"
+        [ -n "$REPO_NAME" ] || REPO_NAME="maas-fe-template-public"
+        SONAR_URL_RAW="$(first_non_empty "$(env_or_empty SONAR_HOST_URL_CI)" "$(env_or_empty SONAR_HOST_URL)" || true)"
+        SONAR_TOKEN_RAW="$(first_non_empty "$(env_or_empty SONAR_TOKEN_CI)" "$(env_or_empty SONAR_TOKEN)" || true)"
+        SONAR_URL="$(printf '%s' "$SONAR_URL_RAW" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+        SONAR_TOKEN_CLEAN="$(printf '%s' "$SONAR_TOKEN_RAW" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+        echo "[INFO] sast_sonar event=$BUILD_EVENT sonar_url_len=$(printf '%s' "$SONAR_URL" | wc -c) sonar_token_len=$(printf '%s' "$SONAR_TOKEN_CLEAN" | wc -c)"
+        if [ -z "$SONAR_URL" ] || [ -z "$SONAR_TOKEN_CLEAN" ]; then
+          if [ "$BUILD_EVENT" = "pull_request" ]; then
+            echo "[WARN] sast_sonar skipped on pull_request: Sonar secrets empty or not exposed to PR."
+          else
+            echo "[WARN] sast_sonar skipped: missing SONAR_HOST_URL/SONAR_TOKEN."
+          fi
+          exit 0
+        fi
+        case "$SONAR_URL" in
+          http://*|https://*) ;;
+          *) SONAR_URL="https://$SONAR_URL" ;;
+        esac
+        SONAR_URL="$(printf '%s' "$SONAR_URL" | sed 's:/*$::')"
+        # Keep scanner state in /tmp to avoid /drone/src permission errors.
+        export SONAR_USER_HOME="/tmp/.sonar"
+        mkdir -p "$SONAR_USER_HOME" "/tmp/.scannerwork-pr"
+        sonar-scanner \
+          -Dsonar.host.url="$SONAR_URL" \
+          -Dsonar.login="$SONAR_TOKEN_CLEAN" \
+          -Dsonar.projectKey="$REPO_NAME" \
+          -Dsonar.projectName="$REPO_NAME" \
+          -Dsonar.sources=src \
+          -Dsonar.working.directory="/tmp/.scannerwork-pr"
+
+  - name: sca_fs_trivy
+    image: aquasec/trivy:latest
+    commands:
+      - trivy fs --exit-code 1 --severity HIGH,CRITICAL .
+
+---
+kind: pipeline
+type: docker
+name: build_push_deploy_dev_frontend
+
+trigger:
+  branch:
+    - master
+  event:
+    - push
+
+concurrency:
+  limit: 1
+
+steps:
+  - name: build_frontend
+    image: node:20-bookworm-slim
+    commands:
+      - npm install -g npm@11.16.0
+      - cp .npmrc.example .npmrc
+      - npm ci --include=dev --no-audit --no-fund
+      - rm -f .npmrc
+      - test -x node_modules/.bin/vite
+      - npm run build
+
+  - name: build_push_image
+    image: plugins/docker
+    settings:
+      registry: registry.softoursistemas.com
+      repo: registry.softoursistemas.com/softour/${DRONE_REPO_NAME}
+      tags:
+        - ${DRONE_COMMIT_SHA}
+      username:
+        from_secret: registry_username
+      password:
+        from_secret: registry_password
+
+  - name: image_scan_trivy
+    image: aquasec/trivy:latest
+    environment:
+      REGISTRY_USERNAME:
+        from_secret: registry_username
+      REGISTRY_PASSWORD:
+        from_secret: registry_password
+    commands:
+      - trivy image --username "$REGISTRY_USERNAME" --password "$REGISTRY_PASSWORD" --exit-code 1 --severity HIGH,CRITICAL registry.softoursistemas.com/softour/${DRONE_REPO_NAME}:${DRONE_COMMIT_SHA}
+
+  - name: vault_fetch_runtime_dev
+    image: alpine:3.20
+    environment:
+      VAULT_ADDR:
+        from_secret: vault_addr
+      vault_role_id_dev:
+        from_secret: vault_role_id_dev
+      vault_secret_id_dev:
+        from_secret: vault_secret_id_dev
+    commands:
+      - PROJECT_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$PROJECT_NAME" ] || PROJECT_NAME="maas-fe-template-public"; sh scripts/vault-fetch-runtime.sh dev "$PROJECT_NAME" /drone/src/vault_runtime_dev.env
+
+  - name: deploy_dev
+    image: alpine:3.20
+    environment:
+      SWARM_HOST:
+        from_secret: swarm_test_manager_host
+      SSH_USERNAME:
+        from_secret: ssh_username_dev
+      SSH_PASSWORD:
+        from_secret: ssh_password_dev
+      REGISTRY: registry.softoursistemas.com
+      REGISTRY_USERNAME:
+        from_secret: registry_username
+      REGISTRY_PASSWORD:
+        from_secret: registry_password
+      IMAGE_REPO: registry.softoursistemas.com/softour/${DRONE_REPO_NAME}
+      COMMIT_SHA: ${DRONE_COMMIT_SHA}
+      STACK_NAME: ${DRONE_REPO_NAME}-dev
+    commands:
+      - apk add --no-cache openssh-client sshpass jq bash
+      - test -f /drone/src/vault_runtime_dev.env
+      - IMAGE="$IMAGE_REPO:$COMMIT_SHA" sh scripts/build-runtime-deploy-env.sh dev /drone/src/vault_runtime_dev.env /drone/src/runtime_deploy_dev.env /drone/src/smoke_dev_url.txt "$STACK_NAME"
+      - REPO_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$REPO_NAME" ] || REPO_NAME="maas-fe-template-public"
+      - REPO_NAME="$(printf '%s' "$REPO_NAME" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"; REMOTE_DIR="/opt/stacks/$REPO_NAME"
+      - STACK_FILE="/drone/src/deploy/swarm/app-stack.yml"
+      - '[ -f "$STACK_FILE" ] || STACK_FILE="$(pwd)/deploy/swarm/app-stack.yml"'
+      - sh scripts/drone-deploy.sh "$REMOTE_DIR" "$STACK_NAME" "$STACK_FILE" /drone/src/runtime_deploy_dev.env
+      - rm -f /drone/src/runtime_deploy_dev.env
+
+  - name: smoke_dev
+    image: alpine:3.20
+    commands:
+      - apk add --no-cache curl
+      - SMOKE_URL="$(cat /drone/src/smoke_dev_url.txt)"
+      - test -n "$SMOKE_URL"
+      - curl -fsS "$SMOKE_URL" >/dev/null
+      - rm -f /drone/src/smoke_dev_url.txt /drone/src/vault_runtime_dev.env
+
+---
+kind: pipeline
+type: docker
+name: promote_staging_frontend
+
+trigger:
+  event:
+    - promote
+  target:
+    - staging
+
+concurrency:
+  limit: 1
+
+steps:
+  - name: vault_fetch_runtime_stg
+    image: alpine:3.20
+    environment:
+      VAULT_ADDR:
+        from_secret: vault_addr
+      vault_role_id_stg:
+        from_secret: vault_role_id_stg
+      vault_secret_id_stg:
+        from_secret: vault_secret_id_stg
+    commands:
+      - PROJECT_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$PROJECT_NAME" ] || PROJECT_NAME="maas-fe-template-public"; sh scripts/vault-fetch-runtime.sh stg "$PROJECT_NAME" /drone/src/vault_runtime_stg.env
+
+  - name: deploy_staging
+    image: alpine:3.20
+    environment:
+      SWARM_HOST:
+        from_secret: swarm_test_manager_host
+      SSH_USERNAME:
+        from_secret: ssh_username_dev
+      SSH_PASSWORD:
+        from_secret: ssh_password_dev
+      REGISTRY: registry.softoursistemas.com
+      REGISTRY_USERNAME:
+        from_secret: registry_username
+      REGISTRY_PASSWORD:
+        from_secret: registry_password
+      IMAGE_REPO: registry.softoursistemas.com/softour/${DRONE_REPO_NAME}
+      COMMIT_SHA: ${DRONE_COMMIT_SHA}
+      STACK_NAME: ${DRONE_REPO_NAME}-stg
+    commands:
+      - apk add --no-cache openssh-client sshpass jq bash
+      - test -f /drone/src/vault_runtime_stg.env
+      - IMAGE="$IMAGE_REPO:$COMMIT_SHA" sh scripts/build-runtime-deploy-env.sh stg /drone/src/vault_runtime_stg.env /drone/src/runtime_deploy_stg.env /drone/src/smoke_stg_url.txt "$STACK_NAME" /drone/src/zap_target_stg.txt
+      - REPO_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$REPO_NAME" ] || REPO_NAME="maas-fe-template-public"
+      - REPO_NAME="$(printf '%s' "$REPO_NAME" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"; REMOTE_DIR="/opt/stacks/$REPO_NAME"
+      - STACK_FILE="/drone/src/deploy/swarm/app-stack.yml"
+      - '[ -f "$STACK_FILE" ] || STACK_FILE="$(pwd)/deploy/swarm/app-stack.yml"'
+      - sh scripts/drone-deploy.sh "$REMOTE_DIR" "$STACK_NAME" "$STACK_FILE" /drone/src/runtime_deploy_stg.env
+      - rm -f /drone/src/runtime_deploy_stg.env
+
+  - name: dast_zap_staging
+    image: zaproxy/zap-stable
+    commands:
+      - ZAP_TARGET="$(cat /drone/src/zap_target_stg.txt)"
+      - test -n "$ZAP_TARGET"
+      - zap-baseline.py -t "$ZAP_TARGET" -m 5 -I
+      - rm -f /drone/src/zap_target_stg.txt
+
+  - name: smoke_staging
+    image: alpine:3.20
+    commands:
+      - apk add --no-cache curl
+      - SMOKE_URL="$(cat /drone/src/smoke_stg_url.txt)"
+      - test -n "$SMOKE_URL"
+      - curl -fsS "$SMOKE_URL" >/dev/null
+      - rm -f /drone/src/smoke_stg_url.txt /drone/src/vault_runtime_stg.env
+
+---
+kind: pipeline
+type: docker
+name: promote_production_frontend
+
+trigger:
+  event:
+    - promote
+  target:
+    - production
+
+concurrency:
+  limit: 1
+
+steps:
+  - name: qa_gate
+    image: alpine:3.20
+    commands:
+      - test "${QA_APPROVED}" = "true"
+
+  - name: vault_fetch_runtime_prod
+    image: alpine:3.20
+    environment:
+      VAULT_ADDR:
+        from_secret: vault_addr
+      vault_role_id_prod:
+        from_secret: vault_role_id_prod
+      vault_secret_id_prod:
+        from_secret: vault_secret_id_prod
+    commands:
+      - PROJECT_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$PROJECT_NAME" ] || PROJECT_NAME="maas-fe-template-public"; sh scripts/vault-fetch-runtime.sh prod "$PROJECT_NAME" /drone/src/vault_runtime_prod.env
+
+  - name: deploy_production
+    image: alpine:3.20
+    environment:
+      SWARM_HOST:
+        from_secret: swarm_prod_manager_host
+      SSH_USERNAME:
+        from_secret: ssh_username_prod
+      SSH_PASSWORD:
+        from_secret: ssh_password_prod
+      REGISTRY: registry.softoursistemas.com
+      REGISTRY_USERNAME:
+        from_secret: registry_username
+      REGISTRY_PASSWORD:
+        from_secret: registry_password
+      IMAGE_REPO: registry.softoursistemas.com/softour/${DRONE_REPO_NAME}
+      COMMIT_SHA: ${DRONE_COMMIT_SHA}
+      STACK_NAME: ${DRONE_REPO_NAME}-prod
+    commands:
+      - apk add --no-cache openssh-client sshpass jq bash
+      - test -f /drone/src/vault_runtime_prod.env
+      - IMAGE="$IMAGE_REPO:$COMMIT_SHA" sh scripts/build-runtime-deploy-env.sh prod /drone/src/vault_runtime_prod.env /drone/src/runtime_deploy_prod.env /drone/src/smoke_prod_url.txt "$STACK_NAME"
+      - REPO_NAME="$(printenv DRONE_REPO_NAME 2>/dev/null || true)"; [ -n "$REPO_NAME" ] || REPO_NAME="maas-fe-template-public"
+      - REPO_NAME="$(printf '%s' "$REPO_NAME" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"; REMOTE_DIR="/opt/stacks/$REPO_NAME"
+      - STACK_FILE="/drone/src/deploy/swarm/app-stack.yml"
+      - '[ -f "$STACK_FILE" ] || STACK_FILE="$(pwd)/deploy/swarm/app-stack.yml"'
+      - sh scripts/drone-deploy.sh "$REMOTE_DIR" "$STACK_NAME" "$STACK_FILE" /drone/src/runtime_deploy_prod.env
+      - rm -f /drone/src/runtime_deploy_prod.env
+
+  - name: smoke_production
+    image: alpine:3.20
+    commands:
+      - apk add --no-cache curl
+      - SMOKE_URL="$(cat /drone/src/smoke_prod_url.txt)"
+      - test -n "$SMOKE_URL"
+      - curl -fsS "$SMOKE_URL" >/dev/null
+      - rm -f /drone/src/smoke_prod_url.txt /drone/src/vault_runtime_prod.env

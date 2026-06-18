@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "src/shared/composables/useAppLifecycle/__tests__/useAppLifecycle.spec.ts",
+    "src/shared/composables/useGeolocationPermission/__tests__/useGeolocationPermission.spec.ts",
+    "src/shared/composables/useNetworkStatus/__tests__/useNetworkStatus.spec.ts"
+  ],
+  "exclude": ["node_modules", "dist", "src/__e2e__"]
+}

@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+echo "[INFO] Running lint..."
+npm run lint
+
+echo "[INFO] Running type-check..."
+npm run type-check
+
+echo "[INFO] Running unit tests..."
+npm run test:ci
+
+echo "[INFO] Pre-commit checks passed."

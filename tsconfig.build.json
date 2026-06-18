@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/index.ts",
+    "src/core/**/*.ts",
+    "src/core/**/*.vue",
+    "src/store/**/*.ts",
+    "src/views/login/modules/Auth/Auth.vue",
+    "src/views/callback/modules/AuthCallback/AuthCallback.vue"
+  ],
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.spec.ts",
+    "src/**/__e2e__/**",
+    "src/**/test-setup.ts",
+    "src/main.ts",
+    "src/App.vue",
+    "src/routes.ts"
+  ]
+}

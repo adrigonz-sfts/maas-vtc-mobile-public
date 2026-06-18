@@ -1,0 +1,62 @@
+{
+    "extends": ["stylelint-config-standard-scss"],
+    "customSyntax": "postcss-html",
+    "overrides": [
+        {
+            "files": ["*.scss", "**/*.scss"],
+            "customSyntax": "postcss-scss"
+        },
+        {
+            "files": ["*.vue", "**/*.vue"],
+            "customSyntax": "postcss-html"
+        }
+    ],
+    "rules": {
+        "selector-class-pattern": [
+            "^[a-z]([a-z0-9-]+)?(__([a-z0-9]+-?)+)?(--([a-z0-9]+-?)+){0,2}$",
+            {
+                "message": "Expected class selector to follow BEM naming (block__element--modifier)"
+            }
+        ],
+        "selector-id-pattern": [
+            "^[a-z]([a-z0-9-]+)?$",
+            {
+                "message": "Expected id selector to be kebab-case"
+            }
+        ],
+        "custom-property-pattern": [
+            "^[a-z]([a-z0-9-]+)?$",
+            {
+                "message": "Expected custom property to be kebab-case"
+            }
+        ],
+        "scss/at-function-pattern": "^[a-z]([a-z0-9-]+)?$",
+        "scss/at-mixin-pattern": "^[a-z]([a-z0-9-]+)?$",
+        "scss/dollar-variable-pattern": [
+            "^[a-z]([a-z0-9-]+)?$",
+            {
+                "message": "Expected variable to be kebab-case"
+            }
+        ],
+        "scss/percent-placeholder-pattern": "^[a-z]([a-z0-9-]+)?$",
+        "selector-max-id": 0,
+        "selector-max-specificity": "0,4,0",
+        "selector-no-qualifying-type": [
+            true,
+            {
+                "ignore": ["attribute", "class"]
+            }
+        ],
+        "declaration-no-important": true,
+        "selector-pseudo-class-no-unknown": [
+            true,
+            {
+                "ignorePseudoClasses": ["global", "deep"]
+            }
+        ],
+        "color-function-notation": "legacy",
+        "alpha-value-notation": "number",
+        "no-descending-specificity": null,
+        "import-notation": "string"
+    }
+}

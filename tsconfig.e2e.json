@@ -1,0 +1,9 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "noEmit": true,
+        "types": ["@playwright/test"]
+    },
+    "include": ["src/__e2e__/**/*.ts"],
+    "exclude": ["node_modules"]
+}

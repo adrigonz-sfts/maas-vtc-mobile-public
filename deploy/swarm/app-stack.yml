@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: ${IMAGE}
+    environment:
+      VITE_ENV: ${VITE_ENV}
+      VITE_APP_BASE_URL: ${VITE_APP_BASE_URL}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL}
+      VITE_FRONTEND_REDIRECT_ORIGIN: ${VITE_FRONTEND_REDIRECT_ORIGIN}
+    networks:
+      - app_network
+    deploy:
+      mode: replicated
+      replicas: 2
+      update_config:
+        order: start-first
+        parallelism: 1
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      labels:
+        - traefik.enable=true
+        - traefik.swarm.network=${SWARM_NETWORK}
+        - traefik.http.routers.${STACK_NAME}.rule=Host(`${TRAEFIK_HOST}`)
+        - traefik.http.routers.${STACK_NAME}.entrypoints=http
+        - traefik.http.services.${STACK_NAME}.loadbalancer.server.port=8080
+
+networks:
+  app_network:
+    external: true
+    name: ${SWARM_NETWORK}
