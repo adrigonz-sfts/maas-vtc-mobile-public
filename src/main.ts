@@ -6,6 +6,7 @@ import { createI18n } from 'vue-i18n';
 import GlobalFrontComponents from '@softour/global-front-components';
 import '@softour/global-front-components/style.css';
 import '@softour/maas-users-micro-front-private/style.css';
+import '@softour/maas-vtc-micro-front-private/style.css';
 import '@softour/global-front-tokens-private';
 import AppVue from '@/App.vue';
 import { getRuntimeConfigValue } from '@/config/runtimeConfig';

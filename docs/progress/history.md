@@ -1,5 +1,20 @@
 # Historial de sesiones
 
+## 2026-06-18 — `vtc_home_placeholder` (batch `vtc_home_placeholder`)
+
+**Feature 3 — Home con VtcPlaceholder del paquete VTC** — `done`
+
+### Entregables
+- `Home.vue` wrapper mínimo con `VtcPlaceholder` de `@softour/maas-vtc-micro-front-private`
+- `main.ts`: import `@softour/maas-vtc-micro-front-private/style.css`
+- i18n `vtcPlaceholder.*` en `en.json` / `es.json`
+- Eliminado `Home.scss` (placeholder mobile genérico + logout local)
+- Tests: `Home.spec.ts`, `main-vtc-styles.spec.ts`
+
+### Gate
+- APPROVED — `docs/progress/features/2026-06-18/vtc_home_placeholder/gate_review.md`
+- Suite completa (20 tests), type-check y ESLint acotado: exit 0
+
 ## 2026-06-18 — `users_auth_flow` (batch `users_auth_flow`)
 
 **Feature 2 — Flujo login users + guard + home placeholder mobile** — `done`

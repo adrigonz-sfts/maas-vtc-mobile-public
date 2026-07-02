@@ -9,5 +9,49 @@
             "welcomeBack": "Bienvenido de nuevo",
             "welcomeBackLead": "Inicia sesión para continuar en tu espacio móvil."
         }
+    },
+    "vtcPlaceholder": {
+        "brand": "MAAS VTC",
+        "nav": {
+            "fleet": "Flota",
+            "services": "Servicios",
+            "corporate": "Corporativo",
+            "safety": "Seguridad",
+            "bookNow": "Reservar"
+        },
+        "heroImageAlt": "Vehículo de chófer de lujo en una calle de la ciudad",
+        "eyebrow": "Próximamente",
+        "title": "Viajes premium, elevados",
+        "message": "Estamos preparando una experiencia VTC refinada con chóferes profesionales, reservas en tiempo real y seguridad de nivel corporativo. Sé el primero en saber cuándo lanzamos.",
+        "countdown": {
+            "days": "Días",
+            "hours": "Horas",
+            "minutes": "Minutos",
+            "seconds": "Segundos"
+        },
+        "emailPlaceholder": "Introduce tu correo",
+        "notifyCta": "Avísame",
+        "subscribed": "Ya estás en la lista",
+        "features": {
+            "fleet": {
+                "title": "Flota premium",
+                "text": "Berlinas y SUV ejecutivos mantenidos con los más altos estándares en cada trayecto."
+            },
+            "chauffeurs": {
+                "title": "Chóferes profesionales",
+                "text": "Conductores verificados y formados, con foco en discreción, puntualidad y servicio excepcional."
+            },
+            "security": {
+                "title": "Seguridad primero",
+                "text": "Seguimiento en vivo, identidades verificadas y cumplimiento corporativo integrado."
+            }
+        },
+        "copyright": "© 2026 MAAS VTC. Todos los derechos reservados.",
+        "footer": {
+            "privacy": "Privacidad",
+            "terms": "Términos",
+            "cookies": "Cookies",
+            "contact": "Contacto"
+        }
     }
 }
